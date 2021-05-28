@@ -37,10 +37,11 @@ client.on('message', message => {
   const _channel = client.channels.cache.get(data.discordChannelId)
   _channel.send(new MessageEmbed()
     .setColor(data.embedSuccessColor)
+    // Insert Tweet link
     .setURL('https://twitter.com/')
     .setTitle('Success Tweet posted!')
     .setDescription(`Congratulations, ${message.author}! 🥳\nIf you want to delete your Tweet, react with 🗑️.`)
-    .setFooter('Kallisto Success Bot • Made with ♡', 'https://i.imgur.com/Gh0jOj0.png')
+    .setFooter('Kallisto Success Bot • Made with ♡', data.logoImageUrl)
   ).then((_message) => _message.react('🗑️'))
 })
 
