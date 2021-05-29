@@ -53,6 +53,7 @@ client.on('message', message => {
     if (error) {
       console.error(error)
     } else {
+      
       const status = {
         status: `Success from ${message.author.tag} (Testing)`,
         media_ids: media.media_id_string
@@ -61,8 +62,8 @@ client.on('message', message => {
       // Post Tweet
       twitter.post('statuses/update', status, (error, tweet, response) => {
         if (error) throw error
-        console.log('New Tweet')
         tweetUrl = `https://twitter.com/${data.twitterAccountUrl.split('/')[data.twitterAccountUrl.split('/').length - 1]}/status/${JSON.parse(response.body).id_str}`
+        console.log(`New Tweet: ${tweetUrl}`)
 
         const _channel = client.channels.cache.get(data.discordChannelId)
         _channel.send(new MessageEmbed()
@@ -96,7 +97,7 @@ client.on('messageReactionAdd', (reaction, user) => {
       console.error(error)
       return
     }
-    console.log('Tweet deleted')
+    console.log(`Tweet deleted - ${user.tag}`)
     
     // Send deletion confirmation message
     reaction.message.lineReplyNoMention(new MessageEmbed()
