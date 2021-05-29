@@ -1,6 +1,8 @@
-const {Client, MessageEmbed} = require('discord.js')
+const {Client, MessageEmbed, SystemChannelFlags} = require('discord.js')
 const readJsonSync = require('read-json-sync')
+const Stream = require('stream').Transform
 const Twitter = require('twitter')
+const https = require('https')                                  
 const fs = require('fs')
 require('discord-reply')
 
@@ -20,18 +22,47 @@ client.on('message', message => {
   if (message.author === client.user) return
   if (message.channel.id !== data.discordChannelId) return
 
-  let imageUrl
+  let mediaUrl
+  let mediaType
+  let mediaData
+
   message.attachments.forEach(attachment => {
-    imageUrl = attachment.url
+    // console.log(attachment)
+    mediaUrl = attachment.url
+    mediaType = attachment.url.split('.')[attachment.url.split('.').length - 1]
   })
 
-  // Post Tweet
-  twitter.post('statuses/update', {
-    status: `Success from ${message.author.tag} (Testing)`,
-    // attachment_url: imageUrl
-  }, (error, tweet, response) => {
-    if (error) throw error
-    console.log('New Tweet')
+  // Download file from URL
+  https.request(mediaUrl, (response) => {
+    var data = new Stream()
+  
+    response.on('data', (chunk) => {                                       
+      data.push(chunk)
+    })                                                                         
+  
+    response.on('end', () => {                                             
+      fs.writeFileSync(`temp/media.${mediaType}`, data.read())
+    })                                                                      
+  }).end()
+
+  mediaData = fs.readFileSync(`temp/media.${mediaType}`)
+
+  // Upload file
+  twitter.post('media/upload', {media: mediaData}, (error, media, response) => {
+    if (!error) {
+      const status = {
+        status: `Success from ${message.author.tag} (Testing)`,
+        media_ids: media.media_id_string
+      }
+
+      // Post Tweet
+      twitter.post('statuses/update', status, (error, tweet, response) => {
+        if (error) throw error
+        console.log('New Tweet')
+      })
+    } else {
+      console.error(error)
+    }
   })
 
   const _channel = client.channels.cache.get(data.discordChannelId)
