@@ -25,9 +25,10 @@ client.on('message', message => {
   let mediaUrl
   let mediaType
   let mediaData
+  let tweetId
 
   message.attachments.forEach(attachment => {
-    // console.log(attachment)
+
     mediaUrl = attachment.url
     mediaType = attachment.url.split('.')[attachment.url.split('.').length - 1]
   })
@@ -49,7 +50,9 @@ client.on('message', message => {
 
   // Upload file
   twitter.post('media/upload', {media: mediaData}, (error, media, response) => {
-    if (!error) {
+    if (error) {
+      console.error(error)
+    } else {
       const status = {
         status: `Success from ${message.author.tag} (Testing)`,
         media_ids: media.media_id_string
@@ -59,21 +62,19 @@ client.on('message', message => {
       twitter.post('statuses/update', status, (error, tweet, response) => {
         if (error) throw error
         console.log('New Tweet')
+        tweetUrl = `https://twitter.com/${data.twitterAccountUrl.split('/')[data.twitterAccountUrl.split('/').length - 1]}/status/${JSON.parse(response.body).id_str}`
+
+        const _channel = client.channels.cache.get(data.discordChannelId)
+        _channel.send(new MessageEmbed()
+          .setColor(data.embedSuccessColor)
+          .setURL(tweetUrl)
+          .setTitle('Success Tweet posted!')
+          .setDescription(`Congratulations, ${message.author}! 🥳\nIf you want to delete your Tweet, react with 🗑️.`)
+          .setFooter('Kallisto Success Bot • Made with ♡', data.logoImageUrl)
+        ).then((_message) => _message.react('🗑️'))
       })
-    } else {
-      console.error(error)
     }
   })
-
-  const _channel = client.channels.cache.get(data.discordChannelId)
-  _channel.send(new MessageEmbed()
-    .setColor(data.embedSuccessColor)
-    // Insert Tweet link
-    .setURL('https://twitter.com/')
-    .setTitle('Success Tweet posted!')
-    .setDescription(`Congratulations, ${message.author}! 🥳\nIf you want to delete your Tweet, react with 🗑️.`)
-    .setFooter('Kallisto Success Bot • Made with ♡', data.logoImageUrl)
-  ).then((_message) => _message.react('🗑️'))
 })
 
 client.on('messageReactionAdd', (reaction, user) => {
