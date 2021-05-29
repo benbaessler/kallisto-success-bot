@@ -33,6 +33,8 @@ client.on('message', message => {
     mediaType = attachment.url.split('.')[attachment.url.split('.').length - 1]
   })
 
+  const filePath = `temp/media.${mediaType}`
+
   // Download file from URL
   https.request(mediaUrl, (response) => {
     var data = new Stream()
@@ -42,20 +44,20 @@ client.on('message', message => {
     })                                                                         
   
     response.on('end', () => {                                             
-      fs.writeFileSync(`temp/media.${mediaType}`, data.read())
+      fs.writeFileSync(filePath, data.read())
     })                                                                      
   }).end()
 
-  mediaData = fs.readFileSync(`temp/media.${mediaType}`)
+  mediaData = fs.readFileSync(filePath)
 
   // Upload file
   twitter.post('media/upload', {media: mediaData}, (error, media, response) => {
     if (error) {
       console.error(error)
     } else {
-      
+      fs.unlinkSync(filePath)
       const status = {
-        status: `Success from ${message.author.tag} (Testing)`,
+        status: `Success from ${message.author.tag}`,
         media_ids: media.media_id_string
       }
 
