@@ -75,7 +75,7 @@ client.on('message', message => {
       })
     }
   })
-})
+}) 
 
 client.on('messageReactionAdd', (reaction, user) => {
   if (user.bot) return
@@ -85,17 +85,28 @@ client.on('messageReactionAdd', (reaction, user) => {
   const _target = reaction.message.embeds[0]['description'].split(' ')[1].replace('!', '')
   if (_target !== `<@${user.id}>`) return
 
+  const _split = reaction.message.embeds[0].url.split('/')
+  const tweetId = _split[_split.length - 1]
+
   reaction.message.reactions.removeAll().catch(error => console.error('Failed to clear reactions: ', error))
 
   // Delete Tweet
-
-  reaction.message.lineReplyNoMention(new MessageEmbed()
-    .setColor(data.embedDeleteColor)
-    .setURL(data.twitterAccountUrl)
-    .setTitle('Tweet removed!')
-    .setDescription(`<@${user.id}>'s Success Tweet was deleted.`)
-    .setFooter('Kallisto Success Bot • Made with ♡', 'https://i.imgur.com/Gh0jOj0.png')
-  )
+  twitter.post(`statuses/destroy/${tweetId}.json`, (error) => {
+    if (error) {
+      console.error(error)
+      return
+    }
+    console.log('Tweet deleted')
+    
+    // Send deletion confirmation message
+    reaction.message.lineReplyNoMention(new MessageEmbed()
+      .setColor(data.embedDeleteColor)
+      .setURL(data.twitterAccountUrl)
+      .setTitle('Tweet removed!')
+      .setDescription(`<@${user.id}>'s Success Tweet was deleted.`)
+      .setFooter('Kallisto Success Bot • Made with ♡', 'https://i.imgur.com/Gh0jOj0.png')
+    )
+  })
 })
 
 client.on('ready', () => {
